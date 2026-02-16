@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบให้คะแนน</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        @media (min-width: 600px) {
+            .container {
+                padding: 40px;
+            }
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .score-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 60px;
+            font-weight: bold;
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .score-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 10px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b 0%, #4ecdc4 50%, #45b7d1 100%);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 5px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .buttons-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            min-height: 50px;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        
+        .btn-negative {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+        }
+        
+        .btn-negative:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        }
+        
+        .btn-negative:active {
+            transform: translateY(-1px);
+        }
+        
+        .btn-positive {
+            background: linear-gradient(135deg, #45b7d1, #4ecdc4);
+        }
+        
+        .btn-positive:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(78, 205, 196, 0.3);
+        }
+        
+        .btn-positive:active {
+            transform: translateY(-1px);
+        }
+        
+        .reset-btn {
+            width: 100%;
+            padding: 15px;
+            background: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 50px;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        
+        .reset-btn:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+        }
+        
+        .status {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>คะแนนง้ออ้วนแพรว</h1>
+        
+        <div class="score-display">
+            <div>
+                <div id="score">0</div>
+                <div class="score-label">(-100 ถึง 100)</div>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div class="buttons-group">
+            <button class="btn btn-negative" onclick="adjustScore(-5)">-5</button>
+            <button class="btn btn-negative" onclick="adjustScore(-3)">-3</button>
+            <button class="btn btn-negative" onclick="adjustScore(-1)">-1</button>
+            <button class="btn btn-positive" onclick="adjustScore(+1)">+1</button>
+            <button class="btn btn-positive" onclick="adjustScore(+3)">+3</button>
+            <button class="btn btn-positive" onclick="adjustScore(+5)">+5</button>
+        </div>
+        
+        <button class="reset-btn" onclick="resetScore()">รีเซ็ตคะแนน</button>
+        
+        <div class="status" id="status"></div>
+    </div>
+    
+    <script>
+        let score = 0;
+        const minScore = -100;
+        const maxScore = 100;
+        const storageKey = 'rating_app_score';
+        
+        function saveScore() {
+            localStorage.setItem(storageKey, score);
+        }
+        
+        function loadScore() {
+            const saved = localStorage.getItem(storageKey);
+            if (saved !== null) {
+                score = parseInt(saved);
+            }
+        }
+        
+        function adjustScore(amount) {
+            score = Math.max(minScore, Math.min(maxScore, score + amount));
+            updateDisplay();
+            saveScore();
+        }
+        
+        function resetScore() {
+            score = 0;
+            updateDisplay();
+            saveScore();
+        }
+        
+        function updateDisplay() {
+            document.getElementById('score').textContent = score;
+            
+            // อัปเดตแถบความก้าวหน้า
+            const percentage = ((score - minScore) / (maxScore - minScore)) * 100;
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = percentage + '%';
+            
+            // อัปเดตสถานะ
+            let status = '';
+            if (score > 50) {
+                status = '😄 ดีมาก!';
+            } else if (score > 0) {
+                status = '😊 ดี';
+            } else if (score === 0) {
+                status = '😐 เป็นกลาง';
+            } else if (score > -50) {
+                status = '😕 ไม่ดี';
+            } else {
+                status = '😞 แย่มาก';
+            }
+            
+            document.getElementById('status').textContent = status;
+        }
+        
+        // โหลดคะแนนจากที่บันทึกไว้
+        loadScore();
+        // เริ่มต้นแสดงผล
+        updateDisplay();
+    </script>
+</body>
+</html>
